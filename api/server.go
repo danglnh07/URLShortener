@@ -32,6 +32,7 @@ func NewServer(config *service.Config, conn *sql.DB, logger *slog.Logger) *Serve
 
 func (server *Server) RegisterHandler() {
 	server.mux.HandleFunc("POST /urls", server.HandleCreateShortenURL)
+	server.mux.HandleFunc("GET /urls", server.HandleListURL)
 	server.mux.HandleFunc("GET /", server.HandleRedirect)
 }
 

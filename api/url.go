@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
 
 	db "github.com/danglnh07/URLShortener/db/sqlc"
@@ -101,4 +102,35 @@ func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 
 	// Redirect to the original URL
 	http.Redirect(w, r, url, http.StatusMovedPermanently)
+}
+
+func (server *Server) HandleListURL(w http.ResponseWriter, r *http.Request) {
+	// Get the page_size and page_index parameter
+	params := r.URL.Query()
+	pageSize, err := strconv.Atoi(params.Get("page_size"))
+	if err != nil || pageSize <= 0 || pageSize > 100 {
+		server.WriteError(w, http.StatusBadRequest, "Invalid value for page_size")
+		return
+	}
+	pageIndex, err := strconv.Atoi(params.Get("page_index"))
+	if err != nil || pageIndex <= 0 {
+		server.WriteError(w, http.StatusBadRequest, "Invalid value for page_index")
+		return
+	}
+
+	// Get the list
+	urls, err := server.queries.ListURL(r.Context(), db.ListURLParams{
+		Offset: int32((pageIndex - 1) * pageSize),
+		Limit:  int32(pageSize),
+	})
+	if err != nil {
+		server.logger.Error("GET /urls?page_size=...&page_index=...: failed to get list of URLS",
+			"error", err)
+		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	// Return the list
+	server.WriteJSON(w, http.StatusOK, urls)
+
 }
