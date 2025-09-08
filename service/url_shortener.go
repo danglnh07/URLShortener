@@ -1,5 +1,7 @@
 package service
 
+import "fmt"
+
 const (
 	base62chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
 	base        = 62
@@ -41,4 +43,9 @@ func DecodeBase62(str string) int64 {
 	}
 
 	return num
+}
+
+// Method to quickly generate the shorten URL
+func GenerateShortenURL(config *Config, id int64) string {
+	return fmt.Sprintf("%s:%s/%s", config.Domain, config.Port, EncodeBase62(id))
 }

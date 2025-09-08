@@ -1,4 +1,4 @@
-package api
+package backend
 
 import (
 	"database/sql"
@@ -7,20 +7,28 @@ import (
 	"fmt"
 	"net"
 	"net/http"
+	"strconv"
 	"strings"
+	"time"
 
 	db "github.com/danglnh07/URLShortener/db/sqlc"
 	"github.com/danglnh07/URLShortener/service"
 )
 
+// request struct for create shorten URL action
 type createShortenURLRequest struct {
 	URL string `json:"url" validate:"required"`
 }
 
+// response struct for create shorten URL action
 type createShortenURLResponse struct {
 	ShortenURL string `json:"shorten_url"`
 }
 
+// Handler for create shorten URL action
+// endpoint: POST /api/urls
+// Success: 201
+// Fail: 400, 500
 func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Request) {
 	// Parse JSON request and validate
 	var req createShortenURLRequest
@@ -44,7 +52,7 @@ func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Requ
 		}
 
 		// Other database errors
-		server.logger.Error("POST /urls: failed to insert URL into database", "error", err)
+		server.logger.Error("POST /api/urls: failed to insert URL into database", "error", err)
 		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
@@ -61,6 +69,10 @@ func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Requ
 	server.WriteJSON(w, http.StatusCreated, resp)
 }
 
+// Handler for redirect from shorten URL to original URL
+// endpoint: GET /
+// Success: 301
+// Fail: 400, 500
 func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 	// Get and decode the ID
 	id := service.DecodeBase62(r.URL.Path)
@@ -103,6 +115,18 @@ func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, url, http.StatusMovedPermanently)
 }
 
+// Response struct for listing URLs
+type listURLResponse struct {
+	OriginalURL  string    `json:"original"`
+	ShortenURL   string    `json:"shorten"`
+	TotalVisitor int64     `json:"total_visitor"`
+	CreatedAt    time.Time `json:"created_at"`
+}
+
+// Handler for listing all URLs that has been registered in the system
+// endpoint: GET /api/urls?page_size=...&page_index=...
+// Success: 200
+// Fail: 400, 500
 func (server *Server) HandleListURL(w http.ResponseWriter, r *http.Request) {
 	// Get the page_size and page_index parameter
 	pageSize, pageIndex, err := server.ExtractPageParams(r)
@@ -117,13 +141,87 @@ func (server *Server) HandleListURL(w http.ResponseWriter, r *http.Request) {
 		Limit:  int32(pageSize),
 	})
 	if err != nil {
-		server.logger.Error("GET /urls?page_size=...&page_index=...: failed to get list of URLS",
+		server.logger.Error("GET /api/urls?page_size=...&page_index=...: failed to get list of URLS",
 			"error", err)
 		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
 
-	// Return the list
-	server.WriteJSON(w, http.StatusOK, urls)
+	// Create response struct
+	resps := make([]listURLResponse, len(urls))
+	for i, url := range urls {
+		resps[i] = listURLResponse{
+			OriginalURL:  url.OriginalUrl,
+			ShortenURL:   service.GenerateShortenURL(server.config, url.ID),
+			TotalVisitor: url.TotalVisitors,
+			CreatedAt:    url.TimeCreated,
+		}
+	}
 
+	// Return the list
+	server.WriteJSON(w, http.StatusOK, resps)
+
+}
+
+// Response struct for list visitor for each URL action
+type listVisitorResponse struct {
+	Ip          string    `json:"ip"`
+	OriginalURL string    `json:"original"`
+	ShortenURL  string    `json:"shorten"`
+	TimeVisited time.Time `json:"time_visited"`
+}
+
+// Handler for listing all visitor that has visit the URL
+// endpoint: GET /api/urls/{id}/visitors?page_size=...&page_index=...
+// Success: 200
+// Fail: 400, 404, 500
+func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) {
+	// Get URL ID from path parameter
+	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
+	if err != nil {
+		server.WriteError(w, http.StatusBadRequest, "Invalid URL ID")
+		return
+	}
+
+	// Get the page_size and page_index parameter
+	pageSize, pageIndex, err := server.ExtractPageParams(r)
+	if err != nil {
+		server.WriteError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	// Get the list of visitor who had visit to this URL
+	visitors, err := server.queries.ListVisitor(r.Context(), db.ListVisitorParams{
+		UrlID:  id,
+		Offset: int32((pageIndex - 1) * pageSize),
+		Limit:  int32(pageSize),
+	})
+
+	if err != nil {
+		// If ID not match any record
+		if errors.Is(err, sql.ErrNoRows) {
+			server.WriteError(w, http.StatusNotFound, "This URL ID does not match any record")
+			return
+		}
+
+		// If other database errors
+		server.logger.Error("GET /urls/{id}: failed to get the list of visitor for this url",
+			"url_id", id, "error", err)
+		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+
+	// Create response list
+	resps := make([]listVisitorResponse, len(visitors))
+	for i, visitor := range visitors {
+		resps[i] = listVisitorResponse{
+			Ip:          visitor.Ip,
+			OriginalURL: visitor.OriginalUrl,
+			ShortenURL:  service.GenerateShortenURL(server.config, visitor.UrlID),
+			TimeVisited: visitor.TimeVisited,
+		}
+	}
+
+	// Return result to client
+	server.WriteJSON(w, http.StatusOK, resps)
 }

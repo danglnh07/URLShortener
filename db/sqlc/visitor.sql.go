@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"time"
 )
 
 const createVisitor = `-- name: CreateVisitor :one
@@ -28,7 +29,8 @@ func (q *Queries) CreateVisitor(ctx context.Context, arg CreateVisitorParams) (V
 }
 
 const listVisitor = `-- name: ListVisitor :many
-SELECT ip, url_id, time_visited FROM visitor 
+SELECT v.ip, v.time_visited, v.url_id, u.original_url FROM visitor v
+JOIN url u ON u.id = v.url_id
 WHERE url_id = $1
 OFFSET $2
 LIMIT $3
@@ -40,16 +42,28 @@ type ListVisitorParams struct {
 	Limit  int32 `json:"limit"`
 }
 
-func (q *Queries) ListVisitor(ctx context.Context, arg ListVisitorParams) ([]Visitor, error) {
+type ListVisitorRow struct {
+	Ip          string    `json:"ip"`
+	TimeVisited time.Time `json:"time_visited"`
+	UrlID       int64     `json:"url_id"`
+	OriginalUrl string    `json:"original_url"`
+}
+
+func (q *Queries) ListVisitor(ctx context.Context, arg ListVisitorParams) ([]ListVisitorRow, error) {
 	rows, err := q.db.QueryContext(ctx, listVisitor, arg.UrlID, arg.Offset, arg.Limit)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	items := []Visitor{}
+	items := []ListVisitorRow{}
 	for rows.Next() {
-		var i Visitor
-		if err := rows.Scan(&i.Ip, &i.UrlID, &i.TimeVisited); err != nil {
+		var i ListVisitorRow
+		if err := rows.Scan(
+			&i.Ip,
+			&i.TimeVisited,
+			&i.UrlID,
+			&i.OriginalUrl,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

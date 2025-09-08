@@ -1,4 +1,4 @@
-package api
+package backend
 
 import (
 	"database/sql"
@@ -13,6 +13,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
+// Server struct, holds all dependency used for backend, config and logger
 type Server struct {
 	mux      *http.ServeMux
 	config   *service.Config
@@ -21,6 +22,7 @@ type Server struct {
 	logger   *slog.Logger
 }
 
+// Constructor method for Server
 func NewServer(config *service.Config, conn *sql.DB, logger *slog.Logger) *Server {
 	return &Server{
 		mux:      http.NewServeMux(),
@@ -31,13 +33,20 @@ func NewServer(config *service.Config, conn *sql.DB, logger *slog.Logger) *Serve
 	}
 }
 
+// Helper method for registering handler
 func (server *Server) RegisterHandler() {
-	server.mux.HandleFunc("GET /urls/{id}", server.HandleListVisitor)
-	server.mux.HandleFunc("POST /urls", server.HandleCreateShortenURL)
-	server.mux.HandleFunc("GET /urls", server.HandleListURL)
+	// UI handler
+
+	// Register API handlers
+	server.mux.HandleFunc("GET /api/urls/{id}/visitors", server.HandleListVisitor)
+	server.mux.HandleFunc("POST /api/urls", server.HandleCreateShortenURL)
+	server.mux.HandleFunc("GET /api/urls", server.HandleListURL)
+
+	// Shorten URL handling
 	server.mux.HandleFunc("GET /", server.HandleRedirect)
 }
 
+// Method to start the server
 func (server *Server) Start() error {
 	// Register handler
 	server.RegisterHandler()
@@ -66,6 +75,7 @@ func (server *Server) WriteJSON(w http.ResponseWriter, status int, data any) {
 	})
 }
 
+// Helper method to extract the pagination parameters
 func (server *Server) ExtractPageParams(r *http.Request) (int, int, error) {
 	// Get the page_size and page_index parameter
 	params := r.URL.Query()

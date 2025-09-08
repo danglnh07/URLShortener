@@ -7,7 +7,7 @@ import (
 
 	_ "github.com/lib/pq"
 
-	"github.com/danglnh07/URLShortener/api"
+	"github.com/danglnh07/URLShortener/backend"
 	"github.com/danglnh07/URLShortener/service"
 )
 
@@ -31,7 +31,7 @@ func main() {
 	}
 
 	// Initialize and start server
-	server := api.NewServer(&config, conn, logger)
+	server := backend.NewServer(&config, conn, logger)
 	err = server.Start()
 	if err != nil {
 		logger.Error("Server failed to start or unexpectedly shutdown", "error", err)
