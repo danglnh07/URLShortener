@@ -11,7 +11,7 @@ initschema:
 	sudo docker exec -i url_postgres psql -U root -d url_shortener < ./db/schema/schema.sql
 
 destroyschema:
-	sudo docker exec -i	 url_postgres psql -U root -d url_shortener < ./db/schema/destroy.sql
+	sudo docker exec -i url_postgres psql -U root -d url_shortener < ./db/schema/destroy.sql
 
 psql: 
 	sudo docker exec -it url_postgres psql -U root -d url_shortener
