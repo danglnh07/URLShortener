@@ -23,6 +23,18 @@ func (q *Queries) CreateURL(ctx context.Context, originalUrl string) (Url, error
 	return i, err
 }
 
+const getURL = `-- name: GetURL :one
+SELECT original_url FROM url 
+WHERE id = $1
+`
+
+func (q *Queries) GetURL(ctx context.Context, id int32) (string, error) {
+	row := q.db.QueryRowContext(ctx, getURL, id)
+	var original_url string
+	err := row.Scan(&original_url)
+	return original_url, err
+}
+
 const listURL = `-- name: ListURL :many
 SELECT u.id, u.original_url, u.time_created, (SELECT COUNT(*) FROM visitor v WHERE v.url_id = u.id) AS total_visitors
 FROM url u

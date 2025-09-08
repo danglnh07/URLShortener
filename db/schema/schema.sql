@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS url (
 
 -- Create table visitor
 CREATE TABLE IF NOT EXISTS visitor (
-    ip VARCHAR(21) NOT NULL, -- IPv4 address can have a maximum of 21 characters
+    ip VARCHAR(45) NOT NULL, -- IP address (both IPv4 and IPv6) can have a maximum of 45 characters
     url_id SERIAL NOT NULL REFERENCES url(id),
     PRIMARY KEY (Ip, url_id),
     time_visited TIMESTAMPTZ NOT NULL DEFAULT now()
