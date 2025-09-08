@@ -28,7 +28,7 @@ SELECT original_url FROM url
 WHERE id = $1
 `
 
-func (q *Queries) GetURL(ctx context.Context, id int32) (string, error) {
+func (q *Queries) GetURL(ctx context.Context, id int64) (string, error) {
 	row := q.db.QueryRowContext(ctx, getURL, id)
 	var original_url string
 	err := row.Scan(&original_url)
@@ -48,7 +48,7 @@ type ListURLParams struct {
 }
 
 type ListURLRow struct {
-	ID            int32     `json:"id"`
+	ID            int64     `json:"id"`
 	OriginalUrl   string    `json:"original_url"`
 	TimeCreated   time.Time `json:"time_created"`
 	TotalVisitors int64     `json:"total_visitors"`

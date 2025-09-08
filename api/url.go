@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
 
 	db "github.com/danglnh07/URLShortener/db/sqlc"
@@ -67,7 +66,7 @@ func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 	id := service.DecodeBase62(r.URL.Path)
 
 	// Get the original URL in the database
-	url, err := server.queries.GetURL(r.Context(), int32(id))
+	url, err := server.queries.GetURL(r.Context(), id)
 	if err != nil {
 		// If the ID is invalid (not match any record)
 		if errors.Is(err, sql.ErrNoRows) {
@@ -93,10 +92,10 @@ func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 	// Record the visitor
 	_, err = server.queries.CreateVisitor(r.Context(), db.CreateVisitorParams{
 		Ip:    ip,
-		UrlID: int32(id),
+		UrlID: id,
 	})
 	if err != nil {
-		server.logger.Error("GET /: failed to record the visitor")
+		server.logger.Error("GET /: failed to record the visitor", "error", err)
 		// Should NOT return an error here
 	}
 
@@ -106,15 +105,9 @@ func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 
 func (server *Server) HandleListURL(w http.ResponseWriter, r *http.Request) {
 	// Get the page_size and page_index parameter
-	params := r.URL.Query()
-	pageSize, err := strconv.Atoi(params.Get("page_size"))
-	if err != nil || pageSize <= 0 || pageSize > 100 {
-		server.WriteError(w, http.StatusBadRequest, "Invalid value for page_size")
-		return
-	}
-	pageIndex, err := strconv.Atoi(params.Get("page_index"))
-	if err != nil || pageIndex <= 0 {
-		server.WriteError(w, http.StatusBadRequest, "Invalid value for page_index")
+	pageSize, pageIndex, err := server.ExtractPageParams(r)
+	if err != nil {
+		server.WriteError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 

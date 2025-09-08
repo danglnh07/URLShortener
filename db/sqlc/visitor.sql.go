@@ -17,7 +17,7 @@ RETURNING ip, url_id, time_visited
 
 type CreateVisitorParams struct {
 	Ip    string `json:"ip"`
-	UrlID int32  `json:"url_id"`
+	UrlID int64  `json:"url_id"`
 }
 
 func (q *Queries) CreateVisitor(ctx context.Context, arg CreateVisitorParams) (Visitor, error) {
@@ -35,7 +35,7 @@ LIMIT $3
 `
 
 type ListVisitorParams struct {
-	UrlID  int32 `json:"url_id"`
+	UrlID  int64 `json:"url_id"`
 	Offset int32 `json:"offset"`
 	Limit  int32 `json:"limit"`
 }

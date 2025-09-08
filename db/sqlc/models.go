@@ -9,13 +9,13 @@ import (
 )
 
 type Url struct {
-	ID          int32     `json:"id"`
+	ID          int64     `json:"id"`
 	OriginalUrl string    `json:"original_url"`
 	TimeCreated time.Time `json:"time_created"`
 }
 
 type Visitor struct {
 	Ip          string    `json:"ip"`
-	UrlID       int32     `json:"url_id"`
+	UrlID       int64     `json:"url_id"`
 	TimeVisited time.Time `json:"time_visited"`
 }

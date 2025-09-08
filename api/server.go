@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log/slog"
 	"net/http"
+	"strconv"
 
 	db "github.com/danglnh07/URLShortener/db/sqlc"
 	"github.com/danglnh07/URLShortener/service"
@@ -31,6 +32,7 @@ func NewServer(config *service.Config, conn *sql.DB, logger *slog.Logger) *Serve
 }
 
 func (server *Server) RegisterHandler() {
+	server.mux.HandleFunc("GET /urls/{id}", server.HandleListVisitor)
 	server.mux.HandleFunc("POST /urls", server.HandleCreateShortenURL)
 	server.mux.HandleFunc("GET /urls", server.HandleListURL)
 	server.mux.HandleFunc("GET /", server.HandleRedirect)
@@ -62,4 +64,28 @@ func (server *Server) WriteJSON(w http.ResponseWriter, status int, data any) {
 	json.NewEncoder(w).Encode(map[string]any{
 		"data": data,
 	})
+}
+
+func (server *Server) ExtractPageParams(r *http.Request) (int, int, error) {
+	// Get the page_size and page_index parameter
+	params := r.URL.Query()
+	pageSize, err := strconv.Atoi(params.Get("page_size"))
+	if err != nil {
+		return -1, -1, fmt.Errorf("invalid value for page_size: %v", err)
+	}
+	if pageSize <= 0 || pageSize > 100 {
+		return -1, -1, fmt.Errorf(
+			"invalid value for page_size, must be a positive integer smaller than or equal 100",
+		)
+	}
+
+	pageIndex, err := strconv.Atoi(params.Get("page_index"))
+	if err != nil {
+		return -1, -1, fmt.Errorf("invalid value for page_index")
+	}
+	if pageIndex <= 0 {
+		return -1, -1, fmt.Errorf("invalid value for page_size, must be a positive integer")
+	}
+
+	return pageSize, pageIndex, nil
 }
