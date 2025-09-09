@@ -34,6 +34,15 @@ func (q *Queries) CreateURL(ctx context.Context, originalUrl string) (Url, error
 	return i, err
 }
 
+const deleteURL = `-- name: DeleteURL :exec
+DELETE FROM url WHERE original_url = $1
+`
+
+func (q *Queries) DeleteURL(ctx context.Context, originalUrl string) error {
+	_, err := q.db.ExecContext(ctx, deleteURL, originalUrl)
+	return err
+}
+
 const getURL = `-- name: GetURL :one
 SELECT original_url FROM url 
 WHERE id = $1

@@ -15,3 +15,6 @@ LIMIT $2;
 
 -- name: CountURL :one
 SELECT COUNT(*) FROM url;
+
+-- name: DeleteURL :exec
+DELETE FROM url WHERE original_url = $1;
