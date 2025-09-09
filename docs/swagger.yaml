@@ -1,0 +1,234 @@
+basePath: /
+definitions:
+  api.createShortenURLRequest:
+    properties:
+      url:
+        type: string
+    required:
+    - url
+    type: object
+  api.createShortenURLResponse:
+    properties:
+      shorten_url:
+        type: string
+    type: object
+  api.listURLResponse:
+    properties:
+      created_at:
+        type: string
+      original:
+        type: string
+      shorten:
+        type: string
+      total_visitor:
+        type: integer
+    type: object
+  api.listVisitorResponse:
+    properties:
+      ip:
+        type: string
+      original:
+        type: string
+      shorten:
+        type: string
+      time_visited:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: This is the API for URL Shortener service
+  title: URL Shortener API
+  version: "1.0"
+paths:
+  /{code}:
+    get:
+      consumes:
+      - application/json
+      description: Redirects a visitor from the shortened URL code to the original
+        URL and records the visit.
+      parameters:
+      - description: Shortened URL code
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "301":
+          description: Redirected successfully
+          schema:
+            type: string
+        "400":
+          description: Invalid code or URL not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Redirect to original URL
+      tags:
+      - urls
+  /api/urls:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of all shortened URLs in the system.
+      parameters:
+      - description: Number of items per page
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        required: true
+        type: integer
+      - description: Page index (starting from 1)
+        in: query
+        minimum: 1
+        name: page_index
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of shortened URLs
+          schema:
+            items:
+              $ref: '#/definitions/api.listURLResponse'
+            type: array
+        "400":
+          description: Invalid pagination parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List registered URLs
+      tags:
+      - urls
+    post:
+      consumes:
+      - application/json
+      description: Takes an original URL, validates it, and stores it in the database.
+      parameters:
+      - description: Original URL request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/api.createShortenURLRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Shortened URL created successfully
+          schema:
+            $ref: '#/definitions/api.createShortenURLResponse'
+        "400":
+          description: Invalid input or URL already exists
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Create a shortened URL
+      tags:
+      - urls
+  /api/urls/{id}/visitors:
+    get:
+      consumes:
+      - application/json
+      description: Retrieves a paginated list of visitors who accessed the given shortened
+        URL.
+      parameters:
+      - description: Shortened URL ID (base62 code)
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Number of items per page
+        in: query
+        maximum: 100
+        minimum: 1
+        name: page_size
+        required: true
+        type: integer
+      - description: Page index (starting from 1)
+        in: query
+        minimum: 1
+        name: page_index
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of visitors
+          schema:
+            items:
+              $ref: '#/definitions/api.listVisitorResponse'
+            type: array
+        "400":
+          description: Invalid pagination parameters
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: URL ID not found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List visitors for a shortened URL
+      tags:
+      - visitors
+  /api/urls/count:
+    get:
+      consumes:
+      - application/json
+      description: Returns the total number of shortened URLs stored in the system
+        (useful for pagination).
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Total number of URLs
+          schema:
+            additionalProperties:
+              format: int64
+              type: integer
+            type: object
+        "500":
+          description: Internal server error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Get total URLs
+      tags:
+      - urls
+swagger: "2.0"

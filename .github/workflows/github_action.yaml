@@ -5,9 +5,9 @@ name: ci-test
 
 on:
   push:
-    branches: [ "ft/ci", "main" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "ft/ci", "main" ]
+    branches: [ "main" ]
 
 jobs:
 

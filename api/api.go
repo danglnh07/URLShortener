@@ -23,10 +23,18 @@ type createShortenURLResponse struct {
 	ShortenURL string `json:"shorten_url"`
 }
 
-// Handler for create shorten URL action
-// endpoint: POST /api/urls
-// Success: 201
-// Fail: 400, 500
+// HandleCreateShortenURL godoc
+//
+// @Summary      Create a shortened URL
+// @Description  Takes an original URL, validates it, and stores it in the database.
+// @Tags         urls
+// @Accept       json
+// @Produce      json
+// @Param        request body createShortenURLRequest true "Original URL request"
+// @Success      201 {object} createShortenURLResponse "Shortened URL created successfully"
+// @Failure      400 {object} map[string]string "Invalid input or URL already exists"
+// @Failure      500 {object} map[string]string "Internal server error"
+// @Router       /api/urls [post]
 func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Request) {
 	// Parse JSON request and validate
 	var req createShortenURLRequest
@@ -66,10 +74,17 @@ func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Requ
 	server.WriteJSON(w, http.StatusCreated, resp)
 }
 
-// Handler for redirect from shorten URL to original URL
-// endpoint: GET /{code}
-// Success: 301
-// Fail: 400, 500
+// HandleRedirect godoc
+// @Summary      Redirect to original URL
+// @Description  Redirects a visitor from the shortened URL code to the original URL and records the visit.
+// @Tags         urls
+// @Accept       json
+// @Produce      json
+// @Param        code path string true "Shortened URL code"
+// @Success      301 {string} string "Redirected successfully"
+// @Failure      400 {object} map[string]string "Invalid code or URL not found"
+// @Failure      500 {object} map[string]string "Internal server error"
+// @Router       /{code} [get]
 func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 	// Get and decode the ID
 	id := service.DecodeBase62(r.PathValue("code"))
@@ -120,10 +135,18 @@ type listURLResponse struct {
 	CreatedAt    time.Time `json:"created_at"`
 }
 
-// Handler for listing all URLs that has been registered in the system
-// endpoint: GET /api/urls?page_size=...&page_index=...
-// Success: 200
-// Fail: 400, 500
+// HandleListURL godoc
+// @Summary      List registered URLs
+// @Description  Retrieves a paginated list of all shortened URLs in the system.
+// @Tags         urls
+// @Accept       json
+// @Produce      json
+// @Param        page_size  query int true  "Number of items per page" minimum(1) maximum(100)
+// @Param        page_index query int true  "Page index (starting from 1)" minimum(1)
+// @Success      200 {array} listURLResponse "List of shortened URLs"
+// @Failure      400 {object} map[string]string "Invalid pagination parameters"
+// @Failure      500 {object} map[string]string "Internal server error"
+// @Router       /api/urls [get]
 func (server *Server) HandleListURL(w http.ResponseWriter, r *http.Request) {
 	// Get the page_size and page_index parameter
 	pageSize, pageIndex, err := server.ExtractPageParams(r)
@@ -168,10 +191,20 @@ type listVisitorResponse struct {
 	TimeVisited time.Time `json:"time_visited"`
 }
 
-// Handler for listing all visitor that has visit the URL
-// endpoint: GET /api/urls/{id}/visitors?page_size=...&page_index=...
-// Success: 200
-// Fail: 400, 404, 500
+// HandleListVisitor godoc
+// @Summary      List visitors for a shortened URL
+// @Description  Retrieves a paginated list of visitors who accessed the given shortened URL.
+// @Tags         visitors
+// @Accept       json
+// @Produce      json
+// @Param        id          path  string true  "Shortened URL ID (base62 code)"
+// @Param        page_size   query int    true  "Number of items per page" minimum(1) maximum(100)
+// @Param        page_index  query int    true  "Page index (starting from 1)" minimum(1)
+// @Success      200 {array} listVisitorResponse "List of visitors"
+// @Failure      400 {object} map[string]string "Invalid pagination parameters"
+// @Failure      404 {object} map[string]string "URL ID not found"
+// @Failure      500 {object} map[string]string "Internal server error"
+// @Router       /api/urls/{id}/visitors [get]
 func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) {
 	// Get URL ID from path parameter
 	id := service.DecodeBase62(r.PathValue("id"))
@@ -219,10 +252,15 @@ func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) 
 	server.WriteJSON(w, http.StatusOK, resps)
 }
 
-// Handler for getting the total URLs for pagination
-// endpoint: GET /api/urls/count
-// Success: 200
-// Fail: 500
+// HandleCountURL godoc
+// @Summary      Get total URLs
+// @Description  Returns the total number of shortened URLs stored in the system (useful for pagination).
+// @Tags         urls
+// @Accept       json
+// @Produce      json
+// @Success      200 {object} map[string]int64 "Total number of URLs"
+// @Failure      500 {object} map[string]string "Internal server error"
+// @Router       /api/urls/count [get]
 func (server *Server) HandleCountURL(w http.ResponseWriter, r *http.Request) {
 	count, err := server.queries.CountURL(r.Context())
 	if err != nil {
