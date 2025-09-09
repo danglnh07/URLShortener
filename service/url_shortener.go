@@ -47,5 +47,5 @@ func DecodeBase62(str string) int64 {
 
 // Method to quickly generate the shorten URL
 func GenerateShortenURL(config *Config, id int64) string {
-	return fmt.Sprintf("%s:%s/%s", config.Domain, config.Port, EncodeBase62(id))
+	return fmt.Sprintf("http://%s:%s/%s", config.Domain, config.Port, EncodeBase62(id))
 }

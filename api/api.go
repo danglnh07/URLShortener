@@ -1,13 +1,11 @@
-package backend
+package api
 
 import (
 	"database/sql"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"net"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -58,8 +56,7 @@ func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Requ
 	}
 
 	// Create response with shorten URL using the database ID
-	shortenURL := fmt.Sprintf("%s:%s/%s",
-		server.config.Domain, server.config.Port, service.EncodeBase62(int64(res.ID)))
+	shortenURL := service.GenerateShortenURL(server.config, res.ID)
 	server.logger.Info("Create URL shorten successfully", "url", shortenURL)
 	resp := createShortenURLResponse{
 		ShortenURL: shortenURL,
@@ -70,12 +67,12 @@ func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Requ
 }
 
 // Handler for redirect from shorten URL to original URL
-// endpoint: GET /
+// endpoint: GET /{code}
 // Success: 301
 // Fail: 400, 500
 func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 	// Get and decode the ID
-	id := service.DecodeBase62(r.URL.Path)
+	id := service.DecodeBase62(r.PathValue("code"))
 
 	// Get the original URL in the database
 	url, err := server.queries.GetURL(r.Context(), id)
@@ -87,7 +84,7 @@ func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 		}
 
 		// Other database errors
-		server.logger.Error("GET /: failed to get original URL", "error", err)
+		server.logger.Error("GET /{code}: failed to get original URL", "error", err)
 		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
 		return
 	}
@@ -107,7 +104,7 @@ func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 		UrlID: id,
 	})
 	if err != nil {
-		server.logger.Error("GET /: failed to record the visitor", "error", err)
+		server.logger.Error("GET /{code}: failed to record the visitor", "error", err)
 		// Should NOT return an error here
 	}
 
@@ -137,8 +134,8 @@ func (server *Server) HandleListURL(w http.ResponseWriter, r *http.Request) {
 
 	// Get the list
 	urls, err := server.queries.ListURL(r.Context(), db.ListURLParams{
-		Offset: int32((pageIndex - 1) * pageSize),
-		Limit:  int32(pageSize),
+		Offset: (pageIndex - 1) * pageSize,
+		Limit:  pageSize,
 	})
 	if err != nil {
 		server.logger.Error("GET /api/urls?page_size=...&page_index=...: failed to get list of URLS",
@@ -177,11 +174,7 @@ type listVisitorResponse struct {
 // Fail: 400, 404, 500
 func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) {
 	// Get URL ID from path parameter
-	id, err := strconv.ParseInt(r.PathValue("id"), 10, 64)
-	if err != nil {
-		server.WriteError(w, http.StatusBadRequest, "Invalid URL ID")
-		return
-	}
+	id := service.DecodeBase62(r.PathValue("id"))
 
 	// Get the page_size and page_index parameter
 	pageSize, pageIndex, err := server.ExtractPageParams(r)
@@ -193,8 +186,8 @@ func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) 
 	// Get the list of visitor who had visit to this URL
 	visitors, err := server.queries.ListVisitor(r.Context(), db.ListVisitorParams{
 		UrlID:  id,
-		Offset: int32((pageIndex - 1) * pageSize),
-		Limit:  int32(pageSize),
+		Offset: (pageIndex - 1) * pageSize,
+		Limit:  pageSize,
 	})
 
 	if err != nil {
@@ -205,7 +198,7 @@ func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) 
 		}
 
 		// If other database errors
-		server.logger.Error("GET /urls/{id}: failed to get the list of visitor for this url",
+		server.logger.Error("GET /api/urls/{id}/visitors: failed to get the list of visitor for this url",
 			"url_id", id, "error", err)
 		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
 		return
@@ -224,4 +217,20 @@ func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) 
 
 	// Return result to client
 	server.WriteJSON(w, http.StatusOK, resps)
+}
+
+// Handler for getting the total URLs for pagination
+// endpoint: GET /api/urls/count
+// Success: 200
+// Fail: 500
+func (server *Server) HandleCountURL(w http.ResponseWriter, r *http.Request) {
+	count, err := server.queries.CountURL(r.Context())
+	if err != nil {
+		server.logger.Error("GET /api/urls/count: failed to get the total of the URLs in database")
+		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
+		return
+	}
+	server.WriteJSON(w, http.StatusOK, map[string]int64{
+		"total_urls": count,
+	})
 }

@@ -1,4 +1,4 @@
-package backend
+package api
 
 import (
 	"database/sql"
@@ -35,15 +35,24 @@ func NewServer(config *service.Config, conn *sql.DB, logger *slog.Logger) *Serve
 
 // Helper method for registering handler
 func (server *Server) RegisterHandler() {
-	// UI handler
-
 	// Register API handlers
-	server.mux.HandleFunc("GET /api/urls/{id}/visitors", server.HandleListVisitor)
-	server.mux.HandleFunc("POST /api/urls", server.HandleCreateShortenURL)
-	server.mux.HandleFunc("GET /api/urls", server.HandleListURL)
+	server.mux.Handle("GET /api/urls/{id}/visitors", http.Handler(
+		server.CORSMiddleware(http.HandlerFunc(server.HandleListVisitor))),
+	)
+	server.mux.Handle("POST /api/urls", http.Handler(
+		server.CORSMiddleware(http.HandlerFunc(server.HandleCreateShortenURL))),
+	)
+	server.mux.Handle("GET /api/urls/count", http.Handler(
+		server.CORSMiddleware(http.HandlerFunc(server.HandleCountURL))),
+	)
+	server.mux.Handle("GET /api/urls", http.Handler(
+		server.CORSMiddleware(http.HandlerFunc(server.HandleListURL))),
+	)
 
 	// Shorten URL handling
-	server.mux.HandleFunc("GET /", server.HandleRedirect)
+	server.mux.Handle("GET /{code}", http.Handler(
+		server.CORSMiddleware(http.HandlerFunc(server.HandleRedirect))),
+	)
 }
 
 // Method to start the server
@@ -62,7 +71,7 @@ func (server *Server) WriteError(w http.ResponseWriter, status int, message stri
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	json.NewEncoder(w).Encode(map[string]string{
-		"message": message,
+		"error": message,
 	})
 }
 
@@ -70,13 +79,11 @@ func (server *Server) WriteError(w http.ResponseWriter, status int, message stri
 func (server *Server) WriteJSON(w http.ResponseWriter, status int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]any{
-		"data": data,
-	})
+	json.NewEncoder(w).Encode(data)
 }
 
-// Helper method to extract the pagination parameters
-func (server *Server) ExtractPageParams(r *http.Request) (int, int, error) {
+// Helper method to extract the pagination parameters. page_index are 1-based index
+func (server *Server) ExtractPageParams(r *http.Request) (int32, int32, error) {
 	// Get the page_size and page_index parameter
 	params := r.URL.Query()
 	pageSize, err := strconv.Atoi(params.Get("page_size"))
@@ -97,5 +104,5 @@ func (server *Server) ExtractPageParams(r *http.Request) (int, int, error) {
 		return -1, -1, fmt.Errorf("invalid value for page_size, must be a positive integer")
 	}
 
-	return pageSize, pageIndex, nil
+	return int32(pageSize), int32(pageIndex), nil
 }

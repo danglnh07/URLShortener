@@ -10,6 +10,17 @@ import (
 	"time"
 )
 
+const countURL = `-- name: CountURL :one
+SELECT COUNT(*) FROM url
+`
+
+func (q *Queries) CountURL(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countURL)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createURL = `-- name: CreateURL :one
 INSERT INTO url(original_url)
 VALUES ($1)

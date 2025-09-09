@@ -12,3 +12,6 @@ SELECT u.*, (SELECT COUNT(*) FROM visitor v WHERE v.url_id = u.id) AS total_visi
 FROM url u
 OFFSET $1
 LIMIT $2;
+
+-- name: CountURL :one
+SELECT COUNT(*) FROM url;
