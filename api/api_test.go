@@ -32,9 +32,16 @@ func TestMain(m *testing.M) {
 	err := service.LoadConfig("../.env")
 	if err != nil {
 		logger.Error("Failed to load config for API testing", "error", err)
+
 		// In CI/CD, we can get the enviroment from other source, so we don't return here
 	}
-	config = service.GetConfig()
+
+	config = service.Config{
+		Domain:   os.Getenv("DOMAIN"),
+		Port:     os.Getenv("PORT"),
+		DbDriver: os.Getenv("DB_DRIVER"),
+		DbSource: os.Getenv("DB_SOURCE"),
+	}
 
 	// Connect to database
 	conn, err := sql.Open(config.DbDriver, config.DbSource)
