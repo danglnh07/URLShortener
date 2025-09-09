@@ -9,3 +9,6 @@ JOIN url u ON u.id = v.url_id
 WHERE url_id = $1
 OFFSET $2
 LIMIT $3;
+
+-- name: DeleteVisitor :exec
+DELETE FROM visitor WHERE ip = $1 AND url_id = $2 AND time_visited = $3;

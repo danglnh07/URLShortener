@@ -28,6 +28,21 @@ func (q *Queries) CreateVisitor(ctx context.Context, arg CreateVisitorParams) (V
 	return i, err
 }
 
+const deleteVisitor = `-- name: DeleteVisitor :exec
+DELETE FROM visitor WHERE ip = $1 AND url_id = $2 AND time_visited = $3
+`
+
+type DeleteVisitorParams struct {
+	Ip          string    `json:"ip"`
+	UrlID       int64     `json:"url_id"`
+	TimeVisited time.Time `json:"time_visited"`
+}
+
+func (q *Queries) DeleteVisitor(ctx context.Context, arg DeleteVisitorParams) error {
+	_, err := q.db.ExecContext(ctx, deleteVisitor, arg.Ip, arg.UrlID, arg.TimeVisited)
+	return err
+}
+
 const listVisitor = `-- name: ListVisitor :many
 SELECT v.ip, v.time_visited, v.url_id, u.original_url FROM visitor v
 JOIN url u ON u.id = v.url_id
