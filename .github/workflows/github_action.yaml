@@ -38,6 +38,12 @@ jobs:
       with:
         go-version: '1.24.6'
 
+    - name: Run the postgres container
+      run: make postgres
+
+    - name: Create database
+      run: make createdb 
+
     - name: Run database schema
       run: make initschema
 
@@ -46,5 +52,3 @@ jobs:
 
     - name: Test
       run: make test
-
-  
