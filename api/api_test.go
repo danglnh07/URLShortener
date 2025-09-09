@@ -32,7 +32,7 @@ func TestMain(m *testing.M) {
 	err := service.LoadConfig("../.env")
 	if err != nil {
 		logger.Error("Failed to load config for API testing", "error", err)
-		os.Exit(1)
+		// In CI/CD, we can get the enviroment from other source, so we don't return here
 	}
 	config = service.GetConfig()
 

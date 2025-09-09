@@ -51,3 +51,8 @@ jobs:
 
     - name: Test
       run: make test
+      env:
+        DOMAIN: localhost
+        PORT: 8080
+        DB_DRIVER: postgres
+        DB_SOURCE: postgresql://root:123456@localhost:5432/url_shortener?sslmode=disable
