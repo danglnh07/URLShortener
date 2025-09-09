@@ -46,9 +46,6 @@ jobs:
       env:
         PGPASSWORD: 123456
 
-    - name: Run database schema
-      run: make initschema
-
     - name: Build
       run: go build -v ./...
 
