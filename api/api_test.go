@@ -13,6 +13,7 @@ import (
 	"os"
 	"strings"
 	"testing"
+	"time"
 
 	_ "github.com/lib/pq"
 
@@ -37,10 +38,12 @@ func TestMain(m *testing.M) {
 	}
 
 	config = service.Config{
-		Domain:   os.Getenv("DOMAIN"),
-		Port:     os.Getenv("PORT"),
-		DbDriver: os.Getenv("DB_DRIVER"),
-		DbSource: os.Getenv("DB_SOURCE"),
+		Domain:     os.Getenv("DOMAIN"),
+		Port:       os.Getenv("PORT"),
+		DbDriver:   os.Getenv("DB_DRIVER"),
+		DbSource:   os.Getenv("DB_SOURCE"),
+		MaxRequest: 5,
+		RefillRate: time.Duration(10) * time.Second,
 	}
 
 	// Connect to database

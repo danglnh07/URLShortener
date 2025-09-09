@@ -56,3 +56,5 @@ jobs:
         PORT: 8080
         DB_DRIVER: postgres
         DB_SOURCE: postgresql://root:123456@localhost:5432/url_shortener?sslmode=disable
+        MAX_REQUEST: 100
+        REFILL_RATE: 10
