@@ -19,6 +19,7 @@ type Server struct {
 	config   *service.Config
 	queries  *db.Queries
 	validate *validator.Validate
+	limiter  *RateLimiter
 	logger   *slog.Logger
 }
 
@@ -29,6 +30,7 @@ func NewServer(config *service.Config, conn *sql.DB, logger *slog.Logger) *Serve
 		config:   config,
 		queries:  db.New(conn),
 		validate: validator.New(validator.WithRequiredStructEnabled()),
+		limiter:  NewRateLimiter(config.MaxRequest, config.RefillRate),
 		logger:   logger,
 	}
 }
@@ -37,21 +39,21 @@ func NewServer(config *service.Config, conn *sql.DB, logger *slog.Logger) *Serve
 func (server *Server) RegisterHandler() {
 	// Register API handlers
 	server.mux.Handle("GET /api/urls/{id}/visitors", http.Handler(
-		server.CORSMiddleware(http.HandlerFunc(server.HandleListVisitor))),
+		server.ChainingMiddleware(http.HandlerFunc(server.HandleListVisitor))),
 	)
 	server.mux.Handle("POST /api/urls", http.Handler(
-		server.CORSMiddleware(http.HandlerFunc(server.HandleCreateShortenURL))),
+		server.ChainingMiddleware(http.HandlerFunc(server.HandleCreateShortenURL))),
 	)
 	server.mux.Handle("GET /api/urls/count", http.Handler(
-		server.CORSMiddleware(http.HandlerFunc(server.HandleCountURL))),
+		server.ChainingMiddleware(http.HandlerFunc(server.HandleCountURL))),
 	)
 	server.mux.Handle("GET /api/urls", http.Handler(
-		server.CORSMiddleware(http.HandlerFunc(server.HandleListURL))),
+		server.ChainingMiddleware(http.HandlerFunc(server.HandleListURL))),
 	)
 
 	// Shorten URL handling
 	server.mux.Handle("GET /{code}", http.Handler(
-		server.CORSMiddleware(http.HandlerFunc(server.HandleRedirect))),
+		server.ChainingMiddleware(http.HandlerFunc(server.HandleRedirect))),
 	)
 }
 

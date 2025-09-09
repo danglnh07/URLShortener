@@ -2,6 +2,8 @@ package service
 
 import (
 	"os"
+	"strconv"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -15,6 +17,10 @@ type Config struct {
 	// Database config
 	DbDriver string
 	DbSource string
+
+	// Rate limiter config
+	MaxRequest int
+	RefillRate time.Duration
 }
 
 var config Config
@@ -27,11 +33,25 @@ func LoadConfig(path string) error {
 		return err
 	}
 
+	// Get and parse max request
+	maxRequest, err := strconv.Atoi(os.Getenv("MAX_REQUEST"))
+	if err != nil {
+		return err
+	}
+
+	// Get and parse refill rate
+	refileRate, err := strconv.Atoi(os.Getenv("REFILL_RATE"))
+	if err != nil {
+		return err
+	}
+
 	config = Config{
-		Domain:   os.Getenv("DOMAIN"),
-		Port:     os.Getenv("PORT"),
-		DbDriver: os.Getenv("DB_DRIVER"),
-		DbSource: os.Getenv("DB_SOURCE"),
+		Domain:     os.Getenv("DOMAIN"),
+		Port:       os.Getenv("PORT"),
+		DbDriver:   os.Getenv("DB_DRIVER"),
+		DbSource:   os.Getenv("DB_SOURCE"),
+		MaxRequest: maxRequest,
+		RefillRate: time.Duration(refileRate) * time.Second,
 	}
 	return err
 }
