@@ -1,3 +1,8 @@
+// @title URL Shortener API
+// @version 1.0
+// @description This is the API for URL Shortener service
+// @host localhost:8080
+// @BasePath /
 package main
 
 import (

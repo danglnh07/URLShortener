@@ -9,8 +9,10 @@ import (
 	"strconv"
 
 	db "github.com/danglnh07/URLShortener/db/sqlc"
+	_ "github.com/danglnh07/URLShortener/docs"
 	"github.com/danglnh07/URLShortener/service"
 	"github.com/go-playground/validator/v10"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 // Server struct, holds all dependency used for backend, config and logger
@@ -55,6 +57,9 @@ func (server *Server) RegisterHandler() {
 	server.mux.Handle("GET /{code}", http.Handler(
 		server.ChainingMiddleware(http.HandlerFunc(server.HandleRedirect))),
 	)
+
+	// Swagger handler
+	server.mux.Handle("/swagger/", httpSwagger.WrapHandler)
 }
 
 // Method to start the server
