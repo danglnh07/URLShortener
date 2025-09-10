@@ -21,7 +21,7 @@ func main() {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 
 	// Load config
-	err := service.LoadConfig(".env")
+	err := service.LoadConfig(".env", logger)
 	if err != nil {
 		logger.Error("Failed to load config", "error", err)
 		os.Exit(1)

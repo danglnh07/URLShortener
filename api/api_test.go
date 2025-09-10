@@ -30,7 +30,7 @@ var (
 
 func TestMain(m *testing.M) {
 	// Load config
-	err := service.LoadConfig("../.env")
+	err := service.LoadConfig("../.env", logger)
 	if err != nil {
 		logger.Error("Failed to load config for API testing", "error", err)
 

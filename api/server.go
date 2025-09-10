@@ -70,7 +70,7 @@ func (server *Server) Start() error {
 	// Startserver
 	server.logger.Info("Starting server", "address",
 		fmt.Sprintf("http://%s", server.config.BaseURL))
-	return http.ListenAndServe(server.config.BaseURL, server.mux)
+	return http.ListenAndServe(":8080", server.mux)
 }
 
 type ErrorResp struct {
