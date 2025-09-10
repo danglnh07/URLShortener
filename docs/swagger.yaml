@@ -1,5 +1,15 @@
 basePath: /
 definitions:
+  api.ErrorResp:
+    properties:
+      error:
+        type: string
+    type: object
+  api.countURLResp:
+    properties:
+      total_urls:
+        type: integer
+    type: object
   api.createShortenURLRequest:
     properties:
       url:
@@ -63,15 +73,11 @@ paths:
         "400":
           description: Invalid code or URL not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
         "500":
           description: Internal server error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
       summary: Redirect to original URL
       tags:
       - urls
@@ -106,15 +112,11 @@ paths:
         "400":
           description: Invalid pagination parameters
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
         "500":
           description: Internal server error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
       summary: List registered URLs
       tags:
       - urls
@@ -139,15 +141,11 @@ paths:
         "400":
           description: Invalid input or URL already exists
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
         "500":
           description: Internal server error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
       summary: Create a shortened URL
       tags:
       - urls
@@ -188,21 +186,15 @@ paths:
         "400":
           description: Invalid pagination parameters
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
         "404":
           description: URL ID not found
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
         "500":
           description: Internal server error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
       summary: List visitors for a shortened URL
       tags:
       - visitors
@@ -218,16 +210,11 @@ paths:
         "200":
           description: Total number of URLs
           schema:
-            additionalProperties:
-              format: int64
-              type: integer
-            type: object
+            $ref: '#/definitions/api.countURLResp'
         "500":
           description: Internal server error
           schema:
-            additionalProperties:
-              type: string
-            type: object
+            $ref: '#/definitions/api.ErrorResp'
       summary: Get total URLs
       tags:
       - urls

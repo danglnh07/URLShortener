@@ -11,8 +11,7 @@ import (
 // Config struct to hold environment variables
 type Config struct {
 	// Server config
-	Domain string
-	Port   string
+	BaseURL string
 
 	// Database config
 	DbDriver string
@@ -46,8 +45,7 @@ func LoadConfig(path string) error {
 	}
 
 	config = Config{
-		Domain:     os.Getenv("DOMAIN"),
-		Port:       os.Getenv("PORT"),
+		BaseURL:    os.Getenv("BASE_URL"),
 		DbDriver:   os.Getenv("DB_DRIVER"),
 		DbSource:   os.Getenv("DB_SOURCE"),
 		MaxRequest: maxRequest,
