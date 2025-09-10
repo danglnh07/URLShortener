@@ -14,3 +14,23 @@
 - `Makefile` for build tool
 - `Docker` for containerization
 - `Swagger - swaggo` as API documentation
+
+## How to run this project
+
+Navigate to your working directory, then
+
+```bash
+# Clone the project
+git clone https://github.com/danglnh07/URLShortener.git
+
+# Run the container
+docker compose up
+```
+
+You can also config how the app run by create an `.env` file with these value:
+
+```bash
+MAX_REQUEST=100
+REFILL_RATE=10 # Second
+PORT=9090 
+```
