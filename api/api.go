@@ -32,19 +32,19 @@ type createShortenURLResponse struct {
 // @Produce      json
 // @Param        request body createShortenURLRequest true "Original URL request"
 // @Success      201 {object} createShortenURLResponse "Shortened URL created successfully"
-// @Failure      400 {object} map[string]string "Invalid input or URL already exists"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Failure      400 {object} ErrorResp "Invalid input or URL already exists"
+// @Failure      500 {object} ErrorResp "Internal server error"
 // @Router       /api/urls [post]
 func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Request) {
 	// Parse JSON request and validate
 	var req createShortenURLRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		server.WriteError(w, http.StatusBadRequest, "Invalid JSON body")
+		server.WriteError(w, http.StatusBadRequest, ErrorResp{"Invalid JSON body"})
 		return
 	}
 
 	if err := server.validate.Struct(req); err != nil {
-		server.WriteError(w, http.StatusBadRequest, "url should not be empty")
+		server.WriteError(w, http.StatusBadRequest, ErrorResp{"url should not be empty"})
 		return
 	}
 
@@ -53,13 +53,13 @@ func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Requ
 	if err != nil {
 		// If URL already exists in database
 		if strings.Contains(err.Error(), "url_original_url_key") {
-			server.WriteError(w, http.StatusBadRequest, "This URL has been registered")
+			server.WriteError(w, http.StatusBadRequest, ErrorResp{"This URL has been registered"})
 			return
 		}
 
 		// Other database errors
 		server.logger.Error("POST /api/urls: failed to insert URL into database", "error", err)
-		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
+		server.WriteError(w, http.StatusInternalServerError, ErrorResp{"Internal server error"})
 		return
 	}
 
@@ -82,8 +82,8 @@ func (server *Server) HandleCreateShortenURL(w http.ResponseWriter, r *http.Requ
 // @Produce      json
 // @Param        code path string true "Shortened URL code"
 // @Success      301 {string} string "Redirected successfully"
-// @Failure      400 {object} map[string]string "Invalid code or URL not found"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Failure      400 {object} ErrorResp "Invalid code or URL not found"
+// @Failure      500 {object} ErrorResp "Internal server error"
 // @Router       /{code} [get]
 func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 	// Get and decode the ID
@@ -94,13 +94,13 @@ func (server *Server) HandleRedirect(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		// If the ID is invalid (not match any record)
 		if errors.Is(err, sql.ErrNoRows) {
-			server.WriteError(w, http.StatusBadRequest, "This URL didn't existed")
+			server.WriteError(w, http.StatusBadRequest, ErrorResp{"This URL didn't existed"})
 			return
 		}
 
 		// Other database errors
 		server.logger.Error("GET /{code}: failed to get original URL", "error", err)
-		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
+		server.WriteError(w, http.StatusInternalServerError, ErrorResp{"Internal server error"})
 		return
 	}
 
@@ -144,14 +144,14 @@ type listURLResponse struct {
 // @Param        page_size  query int true  "Number of items per page" minimum(1) maximum(100)
 // @Param        page_index query int true  "Page index (starting from 1)" minimum(1)
 // @Success      200 {array} listURLResponse "List of shortened URLs"
-// @Failure      400 {object} map[string]string "Invalid pagination parameters"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Failure      400 {object} ErrorResp "Invalid pagination parameters"
+// @Failure      500 {object} ErrorResp "Internal server error"
 // @Router       /api/urls [get]
 func (server *Server) HandleListURL(w http.ResponseWriter, r *http.Request) {
 	// Get the page_size and page_index parameter
 	pageSize, pageIndex, err := server.ExtractPageParams(r)
 	if err != nil {
-		server.WriteError(w, http.StatusBadRequest, err.Error())
+		server.WriteError(w, http.StatusBadRequest, ErrorResp{err.Error()})
 		return
 	}
 
@@ -163,7 +163,7 @@ func (server *Server) HandleListURL(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		server.logger.Error("GET /api/urls?page_size=...&page_index=...: failed to get list of URLS",
 			"error", err)
-		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
+		server.WriteError(w, http.StatusInternalServerError, ErrorResp{"Internal server error"})
 		return
 	}
 
@@ -201,9 +201,9 @@ type listVisitorResponse struct {
 // @Param        page_size   query int    true  "Number of items per page" minimum(1) maximum(100)
 // @Param        page_index  query int    true  "Page index (starting from 1)" minimum(1)
 // @Success      200 {array} listVisitorResponse "List of visitors"
-// @Failure      400 {object} map[string]string "Invalid pagination parameters"
-// @Failure      404 {object} map[string]string "URL ID not found"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Failure      400 {object} ErrorResp "Invalid pagination parameters"
+// @Failure      404 {object} ErrorResp "URL ID not found"
+// @Failure      500 {object} ErrorResp "Internal server error"
 // @Router       /api/urls/{id}/visitors [get]
 func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) {
 	// Get URL ID from path parameter
@@ -212,7 +212,7 @@ func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) 
 	// Get the page_size and page_index parameter
 	pageSize, pageIndex, err := server.ExtractPageParams(r)
 	if err != nil {
-		server.WriteError(w, http.StatusBadRequest, err.Error())
+		server.WriteError(w, http.StatusBadRequest, ErrorResp{err.Error()})
 		return
 	}
 
@@ -226,14 +226,14 @@ func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) 
 	if err != nil {
 		// If ID not match any record
 		if errors.Is(err, sql.ErrNoRows) {
-			server.WriteError(w, http.StatusNotFound, "This URL ID does not match any record")
+			server.WriteError(w, http.StatusNotFound, ErrorResp{"This URL ID does not match any record"})
 			return
 		}
 
 		// If other database errors
 		server.logger.Error("GET /api/urls/{id}/visitors: failed to get the list of visitor for this url",
 			"url_id", id, "error", err)
-		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
+		server.WriteError(w, http.StatusInternalServerError, ErrorResp{"Internal server error"})
 		return
 	}
 
@@ -252,23 +252,25 @@ func (server *Server) HandleListVisitor(w http.ResponseWriter, r *http.Request) 
 	server.WriteJSON(w, http.StatusOK, resps)
 }
 
+type countURLResp struct {
+	TotalURLs int64 `json:"total_urls"`
+}
+
 // HandleCountURL godoc
 // @Summary      Get total URLs
 // @Description  Returns the total number of shortened URLs stored in the system (useful for pagination).
 // @Tags         urls
 // @Accept       json
 // @Produce      json
-// @Success      200 {object} map[string]int64 "Total number of URLs"
-// @Failure      500 {object} map[string]string "Internal server error"
+// @Success      200 {object} countURLResp "Total number of URLs"
+// @Failure      500 {object} ErrorResp "Internal server error"
 // @Router       /api/urls/count [get]
 func (server *Server) HandleCountURL(w http.ResponseWriter, r *http.Request) {
 	count, err := server.queries.CountURL(r.Context())
 	if err != nil {
 		server.logger.Error("GET /api/urls/count: failed to get the total of the URLs in database")
-		server.WriteError(w, http.StatusInternalServerError, "Internal server error")
+		server.WriteError(w, http.StatusInternalServerError, ErrorResp{"Internal server error"})
 		return
 	}
-	server.WriteJSON(w, http.StatusOK, map[string]int64{
-		"total_urls": count,
-	})
+	server.WriteJSON(w, http.StatusOK, countURLResp{count})
 }

@@ -69,17 +69,19 @@ func (server *Server) Start() error {
 
 	// Startserver
 	server.logger.Info("Starting server", "address",
-		fmt.Sprintf("%s:%s", server.config.Domain, server.config.Port))
-	return http.ListenAndServe(fmt.Sprintf(":%s", server.config.Port), server.mux)
+		fmt.Sprintf("http://%s", server.config.BaseURL))
+	return http.ListenAndServe(":8080", server.mux)
+}
+
+type ErrorResp struct {
+	Message string `json:"error"`
 }
 
 // WriteError writes an error response in JSON format
-func (server *Server) WriteError(w http.ResponseWriter, status int, message string) {
+func (server *Server) WriteError(w http.ResponseWriter, status int, message ErrorResp) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
-	json.NewEncoder(w).Encode(map[string]string{
-		"error": message,
-	})
+	json.NewEncoder(w).Encode(message)
 }
 
 // WriteJSON writes a JSON response with the given status code and data in any data type

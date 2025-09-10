@@ -10,7 +10,7 @@ import (
 // Middleware for CORS
 func (server *Server) CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", fmt.Sprintf("http://%s:%s", server.config.Domain, server.config.Port))
+		w.Header().Set("Access-Control-Allow-Origin", fmt.Sprintf("http://%s", server.config.BaseURL))
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
 
@@ -70,7 +70,7 @@ func (limiter *RateLimiter) Allow() bool {
 func (server *Server) RateLimitMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !server.limiter.Allow() {
-			server.WriteError(w, http.StatusTooManyRequests, "Too many request at a time")
+			server.WriteError(w, http.StatusTooManyRequests, ErrorResp{"Too many request at a time"})
 			return
 		}
 		next.ServeHTTP(w, r)

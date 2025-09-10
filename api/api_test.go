@@ -30,7 +30,7 @@ var (
 
 func TestMain(m *testing.M) {
 	// Load config
-	err := service.LoadConfig("../.env")
+	err := service.LoadConfig("../.env", logger)
 	if err != nil {
 		logger.Error("Failed to load config for API testing", "error", err)
 
@@ -38,8 +38,7 @@ func TestMain(m *testing.M) {
 	}
 
 	config = service.Config{
-		Domain:     os.Getenv("DOMAIN"),
-		Port:       os.Getenv("PORT"),
+		BaseURL:    os.Getenv("BASE_URL"),
 		DbDriver:   os.Getenv("DB_DRIVER"),
 		DbSource:   os.Getenv("DB_SOURCE"),
 		MaxRequest: 5,

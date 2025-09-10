@@ -60,19 +60,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid pagination parameters",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -110,19 +104,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid input or URL already exists",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -145,20 +133,13 @@ const docTemplate = `{
                     "200": {
                         "description": "Total number of URLs",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "integer",
-                                "format": "int64"
-                            }
+                            "$ref": "#/definitions/api.countURLResp"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -216,28 +197,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid pagination parameters",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "404": {
                         "description": "URL ID not found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -275,19 +247,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Invalid code or URL not found",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     },
                     "500": {
                         "description": "Internal server error",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": {
-                                "type": "string"
-                            }
+                            "$ref": "#/definitions/api.ErrorResp"
                         }
                     }
                 }
@@ -295,6 +261,22 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "api.ErrorResp": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string"
+                }
+            }
+        },
+        "api.countURLResp": {
+            "type": "object",
+            "properties": {
+                "total_urls": {
+                    "type": "integer"
+                }
+            }
+        },
         "api.createShortenURLRequest": {
             "type": "object",
             "required": [
